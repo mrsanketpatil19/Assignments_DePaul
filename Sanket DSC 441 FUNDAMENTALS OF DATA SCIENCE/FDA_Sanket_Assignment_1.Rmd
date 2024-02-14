@@ -1,0 +1,383 @@
+---
+title: "FODS_Assignment_1"
+author: "Sanket Patil"
+date: "2023-10-01"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# ------------------------------------- Fundamentals of Data Science Assignment 1 ------------------------------------------------
+
+# Importing data in R
+```{r}
+Data = read.csv("adult.csv", header = T)
+head(Data)
+```
+# Question a :
+```{r}
+summary(Data)
+
+summary(Data$age)
+```
+# For variable "age", we can see that the 1st Quartile value i.e. at 25th percenile is 28
+# Value at 75th percentile is 48 and mean is 38.58. Magnitude of 25th percentile and 75th percentile is around 10 units away from the mean.
+# Hence we can say by looking at summary of "age" variable, data is slightly normally distributed.
+# Also there are no NA values in the data.
+```{r}
+summary(Data$hours.per.week)
+```
+# For variable "hours.per.week", 1st Quartile value is 40, 3rd quartile value is 45 and mean is 40.44.
+# As value at 75th percentile is more units away from mean than 25th percentile, we can guess that data is left skewed.
+# No NA values present in the data.
+```{r}
+library(psych)
+describe(Data$hours.per.week)
+```
+
+# Question b :
+
+# As both the variables are numeric, we can use scatterplot to compare them.
+```{r}
+plot(x = Data$age,y = Data$hours.per.week, xlab = "Age", ylab = "Hours per week", main = "Age vs Hours per week")
+```
+# by looking at the scatter plot, we can conclude that there is no linear relation between the two variables.
+
+```{r}
+hist(Data$age,xlab = "Age",col = "brown",border = "black")
+
+hist(Data$hours.per.week,xlab = "hours per week",col = "brown",border = "black")
+```
+# By looking at the histograms, we can say our assumptions based on summary were wrong. Data for variable "age" is right skewed.
+# For variable "hours.per.week", there are more data points near value = 40. Hence we cannot conlude about the normality of the data.
+
+# Question c : 
+```{r}
+library("dplyr")   
+
+# Checking which variables are numeric and which variables are categorical
+
+num_cols <- lapply(Data, is.numeric)
+print(num_cols)
+```
+# With the help of lapply function, we found following numeric columns. 
+age
+fnlwgt
+education.num
+capital.gain
+capital.loss
+hours.per.week
+
+# Creating scatterplot matrix for all numeric variables..
+```{r}
+pairs(~age+fnlwgt+education.num+capital.gain+capital.loss+hours.per.week,data = Data,main = "Scatterplot for all variable")
+```
+# It will be more difficult if we create separate scatterplot for two variables.
+# But if we create scatterplot matrix, we can compare linear relation between all numeric variables in a single plot.
+# By looking at the plot, we can conclude there is no linear relation between any of the variable.
+
+# Question d :
+```{r}
+# We have already differentiated the categorical and numerical variables in below variable.
+print(num_cols)
+```
+workclass
+education
+marital.status
+occupation
+relationship
+race
+sex
+native.country
+income.bracket
+
+# 1. Use barcharts to visualize the distribution
+```{r}
+
+WorkClass <- table(Data$workclass)
+prop.table(WorkClass)
+
+
+# Save the proportion table in an object 
+workclass.ptb <- prop.table(WorkClass)
+
+# Convert the proportion table to a data frame
+WorkClass.df <- as.data.frame(workclass.ptb)
+
+# Converting to a data frame lost the names
+names(WorkClass.df) <- c("Class", "Percent")
+
+library(scales)
+library(ggplot2)
+
+# Use the proportion table as the data frame in a call to ggplot()
+ggplot(data=WorkClass.df, mapping=aes(x=Class, y=Percent)) + geom_col() + scale_y_continuous(label=percent)
+
+library(tidyverse)
+
+
+```
+```{r}
+library(ggplot2)
+Data %>% group_by(sex) %>% count()
+Data %>% ggplot(aes(x = sex)) + geom_bar() + labs(title = "Bar chart for Sex")
+```
+
+```{r}
+library(ggplot2)
+Data %>% group_by(education) %>% count()
+Data %>% ggplot(aes(x = education)) + geom_bar() + labs(title = "Bar chart for education")
+```
+# Question e :
+```{r}
+comparison_matrix <- table(Data$education,Data$income.bracket)
+comparison_matrix
+```
+# As per the cross tabulation, we can see that people with Bachelors degree have most number of records which fall in >50K category.
+# At education level "Preschool", there are 0 records who fall under >50K category.
+# There are highest number of records with education level "HS-grad"
+```{r}
+comparison_matrix <- as.data.frame(comparison_matrix)
+print(comparison_matrix)
+
+names(comparison_matrix) <- c("Education", "Income_Bracket", "Frequency")
+```
+
+# Use a heatmap for visualization
+```{r}
+library(ggplot2)
+
+ggplot(comparison_matrix, aes(x = Education, y = Frequency, fill = Income_Bracket)) + geom_bar(stat = "identity") + labs(x = "Education", y = "Frequency", title = "Education vs Income Bracket") + scale_fill_manual(values = c(" <=50K" = "red", " >50K" = "green")) + theme_minimal()
+```
+# As per the above plot, we can see that people with Bachelors degree have most number of records which fall in >50K category.
+# There are 0 records who fall under >50K category for education = "Preschool".
+# The observations we made based on cross tabulation are matching with the observations based on the bar chart.
+
+
+
+# Problem 2 -----
+
+# Question 1 :
+Reading both given datasets
+```{r}
+Even_Data = read.csv("population_even.csv", header = T)
+Odd_Data = read.csv("population_odd.csv", header = T)
+```
+Merging two datasets into one single dataset.
+```{r}
+df = merge(x = Even_Data, y = Odd_Data, by = "STATE")#,ll.x = TRUE)
+head(df)
+```
+# We joined data based on common variable named "STATE".
+
+
+# Question 2 :
+
+a)
+```{r}
+colnames(df)
+```
+# There is no duplicate "STATE" column created in the joining process.
+# But there are 2 variables with same values which are NAME.x and NAME.y. SO we will remove NAME.y
+```{r}
+df <- within(df, rm(NAME.y))
+colnames(df)
+```
+b)
+# Removing POPESTIMATE from all variables and keeping only year values such as 2010, 2011 etc.
+```{r}
+df <- df %>% rename("2010" = "POPESTIMATE2010",
+                                        "2011" = "POPESTIMATE2011",
+                                        "2012" = "POPESTIMATE2012",
+                                        "2013" = "POPESTIMATE2013",
+                                        "2014" = "POPESTIMATE2014",
+                                        "2015" = "POPESTIMATE2015",
+                                        "2016" = "POPESTIMATE2016",
+                                        "2017" = "POPESTIMATE2017",
+                                        "2018" = "POPESTIMATE2018",
+                                        "2019" = "POPESTIMATE2019"
+)
+colnames(df)
+```
+c)
+# Reordering data by Year
+```{r}
+df<-df %>% select(order(colnames(df)))
+head(df)
+```
+
+# Question 3
+
+# Checking if dataframe has NA values or not.
+```{r}
+sum(is.na(df))  
+which(is.na(df)) 
+```
+# Finding which column has the missing values.
+```{r}
+sapply(df, function(x) sum(is.na(x)))
+```
+
+# Finding which state has NA value in a respective column.
+```{r}
+df$NAME.x[is.na(df$'2011')]
+```
+
+# Replacing NA values for Column "POPESTIMATE2011" :
+```{r}
+df$'2011'[is.na(df$'2011')]<-mean(c(df$'2010'[df$NAME.x==df$NAME.x[is.na(df$'2011')]],df$'2012'[df$NAME.x==df$NAME.x[is.na(df$'2011')]]))
+```
+# Replacing NA values for Column "2013" : 
+```{r}
+df$'2013'[is.na(df$'2013')]<-mean(c(df$'2012'[df$NAME.x==df$NAME.x[is.na(df$'2013')]],df$'2014'[df$NAME.x==df$NAME.x[is.na(df$'2013')]]))
+```
+# Replacing NA values for Column "2015" : 
+```{r}
+df$'2015'[is.na(df$'2015')]<-mean(c(df$'2014'[df$NAME.x==df$NAME.x[is.na(df$'2015')]],df$'2016'[df$NAME.x==df$NAME.x[is.na(df$'2015')]]))
+```
+
+# Replacing NA values for Column "2017" : 
+```{r}
+df$'2017'[is.na(df$'2017')]<-mean(c(df$'2016'[df$NAME.x==df$NAME.x[is.na(df$'2017')]],df$'2018'[df$NAME.x==df$NAME.x[is.na(df$'2017')]]))
+```
+# Replacing NA values for Column "2019" : 
+```{r}
+df$'2019'[is.na(df$'2019')]<-mean(c(df$'2017'[df$NAME.x==df$NAME.x[is.na(df$'2019')]],df$'2018'[df$NAME.x==df$NAME.x[is.na(df$'2019')]]))
+```
+
+# Checking if all missing values replaced or not.
+```{r}
+sapply(df, function(x) sum(is.na(x)))
+```
+# All missing values replaced as given.
+
+
+# Question 4 :
+
+# Get the maximum population for every state
+```{r}
+max_population_year <- df %>% rowwise() %>% mutate(Max_Population = max(c_across(starts_with("20"))))
+head(max_population_year)
+```
+# To get the sum of population statewise
+```{r}
+total_population_year <- df %>% rowwise() %>% mutate(total_population = sum(c_across(starts_with("20"))))
+head(total_population_year)
+```
+# Refer last column to see max population and total population state wise. We just replaced max function by sum function to get sum of the population. 
+
+# Question 5:
+
+# Get the total US population for one single year
+```{r}
+total_us_population_2010 <- sum(df$'2010')
+total_us_population_2010
+```
+
+# Problem 3 ----------------
+
+# Reshape the data to have year and population columns
+```{r}
+library(tidyverse)
+df_new <- df %>%
+  pivot_longer(cols = starts_with("20"), names_to = "year", values_to = "population") %>%
+  mutate(year = as.integer(str_extract(year, "\\d+"))) 
+print(df_new)
+```
+# Choosing 3 states for aalysis
+```{r}
+selected_states <- c("Arizona", "California", "Illinois")
+```
+# Filtering the data
+```{r}
+df_states <- df_new %>% filter(NAME.x %in% selected_states)
+
+library(ggplot2)
+
+ggplot(df_states, aes(x = year, y = population, color = NAME.x)) + geom_line() +  labs(title = "Population Vs Time for 3 States",  x = "Year", y = "Population") 
+```
+# As per above line graph, we can conclude that Population for Illinois state is not varied since 2010. Where as population for california increased gradually.
+# Population of Arizona also increased slightly.
+
+
+
+
+# Prolem 4 -------------------
+
+Question a.
+
+1. Missing values
+Issue - The accuracy of the analysis can be significantly affected by missing values since they can result in incorrect conclusions about the data. 
+Solution - We can use imputation methods such as mean imputation, KNN Imputation, Forward fill etc.
+           Also if the number of rows impacted by NA are less than 2% of overall rows, we can simply remove those rows from data which are having NA values.
+
+2. Outliers 
+Issue - The outcomes of statistical modelling and data analysis might be affected by outliers. 
+        The mean and the standard deviation may be significantly impacted. 
+        Normality may be reduced if the outliers aren't distributed randomly.
+Solution - First detect outliers by following methods.
+          i) IQR method
+          ii) Standard deviation method
+          There are several approaches to handle outliers, such as capping, removing them or by treating them as missing values.
+           
+# Question b :
+
+i) We can use clustering algorithms to group customers who buy similar things. We can use K-Means clustering, KNN etc.
+
+ii) Binary outcomes, such whether a consumer would purchase milk, can be predicted using classification algorithms like decision trees, random forest or logistic regression. 
+  
+iii) We can use Association Rule Mining technique here to find which products are purchased more. We can discover interesting relationships or patterns in large datasets. 
+
+# Question c : 
+
+a. Organizing the customers of a company according to education level. 
+-> Yes this is a data mining task as we are categorizing customers based on some of the attributes such as education level. We can pull out outcomes from it such as which education level has more number of customers etc.
+
+
+b. Computing the total sales of a company. 
+-> No, this is not a data mining task as it doesn't involve discovering patterns or relationships in the data.
+
+c. Sorting a student database according to identification numbers. 
+-> We cannot say this is a data mining task as its just ordering our data based on some of the attributes. We are not discovering any patterns here.
+
+d. Predicting the outcomes of tossing a (fair) pair of dice. 
+-> It is a process of predicting something but we cannot say this is a data mining process as we are not discovering any relationships or patterns here. We are just predicting some of the outcomes.
+
+e. Predicting the future stock price of a company using historical records.
+-> Yes, this is a data mining process as we need to analyse the historical data first, we need a lot of preprocessing of the data if required. Also we need to find patterns and relations between variables to decide if we can keep those variables or not. And then we can predict the future stock price.
+
+
+
+
+
+
+
+            
+            
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
